@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/style.css">
+    <title>Agendamento de Horários - Estúdio de Gravação</title>
+
+</head>
+<body>
+    
+    <div class="container">
+        <h1>Agendamento de Horários</h1>
+        <label for="day">Dia da Semana:</label>
+        <select id="day">
+            <option value="segunda">Segunda-feira</option>
+            <option value="terça">Terça-feira</option>
+            <option value="quarta">Quarta-feira</option>
+            <option value="quinta">Quinta-feira</option>
+            <option value="sexta">Sexta-feira</option>
+        </select>
+
+        <label for="time">Horário:</label>
+        <select id="time"></select>
+
+        <label for="teacher">Nome do Professor:</label>
+        <input type="text" id="teacher" placeholder="Insira o nome do professor">
+
+        <center><button onclick="agendarHorario()">Agendar</button></center> 
+
+        <p class="info">Nota: Alguns horários podem estar indisponíveis. A confirmação final será feita pelo atendente.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const timeSelect = document.getElementById('time');
+            const hours = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+            
+            hours.forEach(hour => {
+                const option = document.createElement('option');
+                option.value = hour;
+                option.textContent = hour;
+                timeSelect.appendChild(option);
+            });
+
+            fetchHorariosIndisponiveis();
+
+            document.getElementById('day').addEventListener('change', fetchHorariosIndisponiveis);
+        });
+
+        function agendarHorario() {
+            const day = document.getElementById('day').value;
+            const time = document.getElementById('time').value;
+            const teacher = document.getElementById('teacher').value;
+
+            if (!teacher) {
+                alert('Por favor, insira o nome do professor.');
+                return;
+            }
+            const data = { day, time, teacher };
+            const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || {};
+
+            if (!agendamentos[day]) {
+                agendamentos[day] = [];
+            }
+
+            if (agendamentos[day].includes(time)) {
+                alert('Este horário já está indisponível.');
+                return;
+            }
+
+            agendamentos[day].push(time);
+            localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
+
+            alert('Horário agendado com sucesso! A confirmação final será feita pelo atendente.');
+
+            sendToWhatsApp(day, time, teacher);
+            fetchHorariosIndisponiveis();
+        }
+
+        function sendToWhatsApp(day, time, teacher) {
+            const message = `Agendamento para ${day} às ${time} com o professor ${teacher}`;
+            const whatsappNumber = '75991009745';
+            const whatsappURL = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(message)}`;
+            window.open(whatsappURL, '_blank');
+        }
+
+        function fetchHorariosIndisponiveis() {
+            const day = document.getElementById('day').value;
+            const timeSelect = document.getElementById('time');
+            const hours = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+            const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || {};
+            const indisponiveis = agendamentos[day] || [];
+
+            timeSelect.innerHTML = '';
+            hours.forEach(hour => {
+                const option = document.createElement('option');
+                option.value = hour;
+                option.textContent = hour;
+                if (indisponiveis.includes(hour)) {
+                    option.disabled = true;
+                }
+                timeSelect.appendChild(option);
+            });
+        }
+    </script>
+</body>
+</html>
